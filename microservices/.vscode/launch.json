@@ -1,0 +1,46 @@
+{
+  "configurations": [
+    {
+      "type": "java",
+      "name": "Spring Boot-EurekaserverApplication<eurekaserver>",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "mainClass": "com.eurekaserver.eurekaserver.EurekaserverApplication",
+      "projectName": "eurekaserver",
+      "args": "",
+      "envFile": "${workspaceFolder}/.env",
+      "vmArgs": " -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=55378 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dspring.jmx.enabled=true -Djava.rmi.server.hostname=localhost -Dspring.application.admin.enabled=true -Dspring.boot.project.name=eurekaserver"
+    },
+    {
+      "type": "java",
+      "name": "Spring Boot-MsclientesApplication<msclientes>",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "mainClass": "com.msclientes.msclientes.MsclientesApplication",
+      "projectName": "msclientes",
+      "args": "",
+      "envFile": "${workspaceFolder}/.env",
+      "vmArgs": " -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=55616 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dspring.jmx.enabled=true -Djava.rmi.server.hostname=localhost -Dspring.application.admin.enabled=true -Dspring.boot.project.name=msclientes"
+    },
+    {
+      "type": "java",
+      "name": "Spring Boot-MscloudgatewayApplication<mscloudgateway>",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "mainClass": "io.github.leandro.mscloudgateway.MscloudgatewayApplication",
+      "projectName": "mscloudgateway",
+      "args": "",
+      "envFile": "${workspaceFolder}/.env"
+    },
+    {
+      "type": "java",
+      "name": "Spring Boot-MscartoesApplication<mscartoes>",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "mainClass": "io.github.leandro.mscartoes.MscartoesApplication",
+      "projectName": "mscartoes",
+      "args": "",
+      "envFile": "${workspaceFolder}/.env"
+    }
+  ]
+}
