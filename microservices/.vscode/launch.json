@@ -41,6 +41,16 @@
       "projectName": "mscartoes",
       "args": "",
       "envFile": "${workspaceFolder}/.env"
+    },
+    {
+      "type": "java",
+      "name": "Spring Boot-MsavaliadorcreditoApplication<msavaliadorcredito>",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "mainClass": "io.github.leandro.msavaliadorcredito.MsavaliadorcreditoApplication",
+      "projectName": "msavaliadorcredito",
+      "args": "",
+      "envFile": "${workspaceFolder}/.env"
     }
   ]
 }
