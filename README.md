@@ -15,47 +15,10 @@ Aqui está um **README.md** organizado e pronto para uso, baseado exatamente nas
 O diagrama abaixo ilustra a interação entre os serviços.
 O **msavaliadorcredito** atua como **orquestrador**, agregando dados de outros serviços e solicitando processamentos assíncronos.
 
-```mermaid
-graph TD
-    User((Usuário))
-    
-    subgraph Infrastructure
-        Gateway["☁️ Cloud Gateway :8080"]
-        Eureka["🔍 Eureka Server :8761"]
-        RabbitMQ[🐇 RabbitMQ]
-    end
+<img width="2816" height="1536" alt="Gemini_Generated_Image_yzyoa0yzyoa0yzyo" src="https://github.com/user-attachments/assets/d9aa8c28-8212-4796-99ca-8ecc0caa56af" />
 
-    subgraph Microservices
-        MS_Clientes[👤 MS Clientes]
-        MS_Cartoes[💳 MS Cartões]
-        MS_Avaliador[📊 MS Avaliador Crédito]
-    end
 
-    %% Service Discovery
-    MS_Clientes -.-> Eureka
-    MS_Cartoes -.-> Eureka
-    MS_Avaliador -.-> Eureka
-    Gateway -.-> Eureka
-
-    %% Request Flow
-    User -->|HTTP Request| Gateway
-    Gateway -->|/clientes| MS_Clientes
-    Gateway -->|/cartoes| MS_Cartoes
-    Gateway -->|/avaliacoes-credito| MS_Avaliador
-
-    %% Synchronous Communication (OpenFeign)
-    MS_Avaliador -- Get Dados Cliente --> MS_Clientes
-    MS_Avaliador -- Get Cartões/Renda --> MS_Cartoes
-    MS_Avaliador -- Get Cartões Cliente --> MS_Cartoes
-
-    %% Asynchronous Communication (RabbitMQ)
-    MS_Avaliador -- Publica Solicitação --> Queue(("Fila: emissao-cartoes"))
-    Queue -->|Consome Mensagem| MS_Cartoes
-    
-    style Gateway fill:#f9f,stroke:#333,stroke-width:2px
-    style MS_Avaliador fill:#bbf,stroke:#333,stroke-width:2px
-    style Queue fill:#ff9,stroke:#333,stroke-width:2px
-```
+> Observação: para desenvolvedores que preferem a versão Mermaid editável, mantenho a notação Mermaid no README anterior — mas a imagem SVG acima garante compatibilidade de visualização em todos os viewers.
 
 ---
 
@@ -133,6 +96,7 @@ Microsserviço **orquestrador**, responsável por integrar os demais serviços.
   <img src="https://img.shields.io/badge/Spring%20Cloud-2021.0.1-blue" />
   <img src="https://img.shields.io/badge/RabbitMQ-Mensageria-orange" />
   <img src="https://img.shields.io/badge/Docker-Container-blue" />
+  <img src="https://img.shields.io/badge/Keycloak-OpenID%20Connect-8A2BE2" />
 </p>
 
 ---
@@ -146,6 +110,61 @@ emissao-cartoes
 ```
 
 ---
+
+## 🔐 Autenticação e Autorização (Keycloak)
+
+Este projeto agora inclui autenticação e autorização baseada em OpenID Connect usando **Keycloak** (perfil de desenvolvimento). O Keycloak fornece um servidor de identidade para gerenciar realms, clientes e usuários. Abaixo estão instruções rápidas para rodar um Keycloak em modo de desenvolvimento e integrar localmente.
+
+Observação: suponho uma configuração de desenvolvimento local — Keycloak em um container acessível em `http://localhost:8180`. Se preferir outra porta ou uma instalação gerenciada, adapte os comandos abaixo.
+
+### Rodar o Keycloak (modo dev)
+
+Execute o container do Keycloak (porta 8180 local para evitar conflito com o Gateway que usa 8080):
+
+```bash
+docker run -p 8180:8080 \
+  -e KEYCLOAK_ADMIN=admin \
+  -e KEYCLOAK_ADMIN_PASSWORD=admin \
+  quay.io/keycloak/keycloak:latest start-dev
+```
+
+- Console de administração: http://localhost:8180/
+- Usuário/Senha (dev): `admin` / `admin` (conforme variáveis acima)
+
+### Configuração mínima recomendada (manual via console Keycloak)
+
+1. Criar um Realm (ex.: `ms-realm`).
+2. Criar um Client (ex.: `ms-client`) com Access Type `public` (para chamadas front-end / simples) ou `confidential` (se usar client secret). Configure o `Valid Redirect URIs` se necessário.
+3. Criar usuários de teste (ex.: `usuario`, senha `senha`) e atribuir roles conforme necessário.
+
+Para um ambiente de produção, não use `start-dev` e configure certificados, HTTPS e políticas de segurança adequadas.
+
+### Como usar (exemplo rápido)
+
+Depois de criar um usuário `usuario` no realm `ms-realm` e o client `ms-client` (public), você pode obter um token com grant_type=password (apenas para testes/dev):
+
+```bash
+curl -s -X POST "http://localhost:8180/realms/ms-realm/protocol/openid-connect/token" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "username=usuario" \
+  -d "password=senha" \
+  -d "grant_type=password" \
+  -d "client_id=ms-client"
+```
+
+O retorno contém o `access_token`. Use-o nas requisições ao Gateway/serviços:
+
+```
+Authorization: Bearer <access_token>
+```
+
+### Integração com os microsserviços
+
+- Configure as aplicações Spring Boot (Gateway e microsserviços) para validar tokens OIDC apontando para o `issuer-uri` do Keycloak (ex.: `http://localhost:8180/realms/ms-realm`).
+- No `application.yml` de cada serviço, defina as propriedades de segurança OAuth2/OIDC conforme a necessidade (resource-server/jwk-set-uri ou issuer-uri) e proteja endpoints com roles.
+
+Se quiser, posso: gerar exemplos de configurações `application.yml` para o `mscloudgateway` e para um dos microsserviços (`msavaliadorcredito`) mostrando as propriedades `spring.security.oauth2` necessárias.
+
 
 ## ▶️ Como Executar o Projeto
 
@@ -167,6 +186,7 @@ docker run -it --rm --name rabbitmq \
 
 ### 2️⃣ Iniciar os serviços (ordem recomendada)
 
+0. **Keycloak** (opcional para autenticação) → porta `8180` (recomendo subir antes do Gateway)
 1. **Eureka Server** → porta `8761`
 2. **Cloud Gateway** → porta `8080`
 3. Microsserviços:
