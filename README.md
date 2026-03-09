@@ -1,6 +1,6 @@
 # API de Microsserviços: Avaliador de Crédito e Mensageria
 
-<p align="center">
+<p align="left">
   Este projeto implementa um ecossistema de microsserviços para avaliação de crédito e emissão de cartões, utilizando <strong>Spring Cloud</strong>, comunicação síncrona (<strong>OpenFeign</strong>) e assíncrona (<strong>RabbitMQ</strong>).
 </p>
 
