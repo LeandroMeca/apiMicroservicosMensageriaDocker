@@ -11,10 +11,10 @@
 O diagrama abaixo ilustra a interação entre os serviços.
 O **msavaliadorcredito** atua como **orquestrador**, agregando dados de outros serviços e solicitando processamentos assíncronos.
 
-<img width="2816" height="1536" alt="Gemini_Generated_Image_yzyoa0yzyoa0yzyo" src="https://github.com/user-attachments/assets/d9aa8c28-8212-4796-99ca-8ecc0caa56af" />
+<img width="2816" height="1536" alt="Gemini_Generated_Image_yzyoa0yzyoa0yzyo" src="https://github.com/user-attachments/assets/faa179a8-b64f-4eed-8549-a88a947134ae" />
 
 
-> Observação: para desenvolvedores que preferem a versão Mermaid editável, mantenho a notação Mermaid no README anterior — mas a imagem SVG acima garante compatibilidade de visualização em todos os viewers.
+> Observação: para desenvolvedores que preferem a versão Mermaid editável, há um arquivo editável em `docs/architecture.mmd` (mermaid). Use-o para modificar o diagrama e, se quiser, re-generate o SVG a partir do mermaid para atualizar `docs/architecture.svg`.
 
 ---
 
@@ -25,7 +25,7 @@ O **msavaliadorcredito** atua como **orquestrador**, agregando dados de outros s
 Responsável pelo **Service Discovery**.
 Todos os microsserviços se registram aqui para permitir comunicação dinâmica sem URLs fixas.
 
-* **Porta:** `8761`
+- **Porta:** `8761`
 
 ---
 
@@ -33,12 +33,11 @@ Todos os microsserviços se registram aqui para permitir comunicação dinâmica
 
 API Gateway responsável por centralizar o acesso externo e rotear as requisições.
 
-* **Porta:** `8080`
-* **Rotas:**
-
-  * `/clientes/**` → `msclientes`
-  * `/cartoes/**` → `mscartoes`
-  * `/avaliacoes-credito/**` → `msavaliadorcredito`
+- **Porta:** `8080`
+- **Rotas:**
+  - `/clientes/**` → `msclientes`
+  - `/cartoes/**` → `mscartoes`
+  - `/avaliacoes-credito/**` → `msavaliadorcredito`
 
 ---
 
@@ -46,13 +45,13 @@ API Gateway responsável por centralizar o acesso externo e rotear as requisiç�
 
 Gerencia os dados cadastrais dos clientes.
 
-* **Tecnologias:** Spring Data JPA, H2
-* **Dados:** Nome, CPF, Idade
+- **Tecnologias:** Spring Data JPA, H2
+- **Dados:** Nome, CPF, Idade
 
 **Endpoints:**
 
-* `POST /clientes` → Cadastra cliente
-* `GET /clientes?cpf={cpf}` → Consulta cliente por CPF
+- `POST /clientes` → Cadastra cliente
+- `GET /clientes?cpf={cpf}` → Consulta cliente por CPF
 
 ---
 
@@ -63,9 +62,9 @@ Também atua como **consumer** da fila RabbitMQ.
 
 **Endpoints:**
 
-* `POST /cartoes` → Cadastra tipo de cartão
-* `GET /cartoes?renda={renda}` → Cartões disponíveis por renda
-* `GET /cartoes?cpf={cpf}` → Cartões associados ao cliente
+- `POST /cartoes` → Cadastra tipo de cartão
+- `GET /cartoes?renda={renda}` → Cartões disponíveis por renda
+- `GET /cartoes?cpf={cpf}` → Cartões associados ao cliente
 
 ---
 
@@ -73,14 +72,14 @@ Também atua como **consumer** da fila RabbitMQ.
 
 Microsserviço **orquestrador**, responsável por integrar os demais serviços.
 
-* Comunicação síncrona via **OpenFeign**
-* Comunicação assíncrona via **RabbitMQ**
+- Comunicação síncrona via **OpenFeign**
+- Comunicação assíncrona via **RabbitMQ**
 
 **Fluxos principais:**
 
-* **Situação do Cliente:** Agrega dados do MS Clientes e MS Cartões
-* **Avaliação de Crédito:** Calcula cartões aprovados com base em renda e idade
-* **Emissão de Cartão:** Publica mensagem na fila `emissao-cartoes`
+- **Situação do Cliente:** Agrega dados do MS Clientes e MS Cartões
+- **Avaliação de Crédito:** Calcula cartões aprovados com base em renda e idade
+- **Emissão de Cartão:** Publica mensagem na fila `emissao-cartoes`
 
 ---
 
@@ -161,6 +160,79 @@ Authorization: Bearer <access_token>
 
 Se quiser, posso: gerar exemplos de configurações `application.yml` para o `mscloudgateway` e para um dos microsserviços (`msavaliadorcredito`) mostrando as propriedades `spring.security.oauth2` necessárias.
 
+## 🧪 Testes com Insomnia
+
+Use o Insomnia para testar rapidamente os endpoints e automatizar a obtenção do token JWT do Keycloak.
+
+Passos rápidos:
+
+1. Instale o Insomnia (https://insomnia.rest/).
+2. Crie um novo Workspace (ex.: "ms-avaliador-dev").
+3. Crie um Environment com variáveis úteis (exemplo):
+
+```json
+{
+  "base_url": "http://localhost:8080",
+  "keycloak_url": "http://localhost:8180",
+  "realm": "ms-realm",
+  "client_id": "ms-client",
+  "username": "usuario",
+  "password": "senha"
+}
+```
+
+4. Criar request para obter token (grant_type=password):
+
+  - Method: POST
+  - URL: `{{ keycloak_url }}/realms/{{ realm }}/protocol/openid-connect/token`
+  - Body: Form URL Encoded
+    - username: `{{ username }}`
+    - password: `{{ password }}`
+    - grant_type: `password`
+    - client_id: `{{ client_id }}`
+
+5. Executar request. A resposta JSON trará `access_token`.
+
+6. Salvar `access_token` como variável de ambiente no Insomnia:
+
+  - Clique na resposta -> seleciona o campo `access_token` -> **Set Environment Variable** (por exemplo: `access_token`).
+  - Alternativamente copie o token manualmente e cole em `access_token` no Environment.
+
+7. Testar endpoints protegidos usando Bearer token:
+
+  - Crie um request (ex.: `POST {{ base_url }}/clientes`) e, em Headers, adicione:
+
+    - Key: `Authorization`
+    - Value: `Bearer {{ access_token }}`
+
+  - Ou use o tipo de autenticação `Bearer Token` no Insomnia e aponte para `{{ access_token }}`.
+
+Exemplos de requests úteis:
+
+- Criar cliente (POST):
+
+  - URL: `{{ base_url }}/clientes`
+  - Body (JSON):
+
+```json
+{
+  "nome": "João da Silva",
+  "cpf": "12345678901",
+  "idade": 30
+}
+```
+
+- Consultar cliente (GET):
+
+  - URL: `{{ base_url }}/clientes?cpf=12345678901`
+
+- Solicitar avaliação de crédito (exemplo):
+
+  - URL: `{{ base_url }}/avaliacoes-credito`
+  - Body (JSON): adaptar conforme o endpoint implementado pelo `msavaliadorcredito`.
+
+Dica: exporte a Collection/Workspace do Insomnia (JSON) para compartilhar com a equipe.
+
 
 ## ▶️ Como Executar o Projeto
 
@@ -173,10 +245,9 @@ docker run -it --rm --name rabbitmq \
   rabbitmq:3.9-management
 ```
 
-* Console de administração: [http://localhost:15672](http://localhost:15672)
-
-  * **Usuário:** guest
-  * **Senha:** guest
+- Console de administração: [http://localhost:15672](http://localhost:15672)
+  - **Usuário:** guest
+  - **Senha:** guest
 
 ---
 
@@ -186,23 +257,22 @@ docker run -it --rm --name rabbitmq \
 1. **Eureka Server** → porta `8761`
 2. **Cloud Gateway** → porta `8080`
 3. Microsserviços:
-
-   * `msclientes`
-   * `mscartoes`
-   * `msavaliadorcredito`
+   - `msclientes`
+   - `mscartoes`
+   - `msavaliadorcredito`
 
 ---
 
 ## ✅ Observações Finais
 
-* Arquitetura baseada em **microsserviços desacoplados**
-* Uso de **Service Discovery**, **API Gateway** e **Mensageria**
-* Ideal para estudos de **Spring Cloud**, **OpenFeign** e **RabbitMQ**
+- Arquitetura baseada em **microsserviços desacoplados**
+- Uso de **Service Discovery**, **API Gateway** e **Mensageria**
+- Ideal para estudos de **Spring Cloud**, **OpenFeign** e **RabbitMQ**
 
 ---
 
 Se quiser, posso:
 
-* Ajustar o README para **portfólio GitHub**
-* Criar uma versão em **inglês**
-* Adicionar seção de **exemplos de requisições (cURL / Postman)**
+- Ajustar o README para **portfólio GitHub**
+- Criar uma versão em **inglês**
+- Adicionar seção de **exemplos de requisições (cURL / Postman)**
