@@ -1,7 +1,3 @@
-Aqui está um **README.md** organizado e pronto para uso, baseado exatamente nas informações que você enviou, já adaptado para **Markdown padrão do GitHub** (mantendo Mermaid, badges e estrutura clara):
-
----
-
 # API de Microsserviços: Avaliador de Crédito e Mensageria
 
 <p align="center">
